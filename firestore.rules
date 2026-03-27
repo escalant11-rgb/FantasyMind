@@ -1,0 +1,90 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.email == "escalante.samuel.011@gmail.com";
+    }
+    
+    function isValidString(val, min, max) {
+      return val is string && val.size() >= min && val.size() <= max;
+    }
+
+    function isValidUrl(url) {
+      return url is string && (url.matches("^https://.*") || url.matches("^http://.*"));
+    }
+
+    // ===============================================================
+    // Profiles
+    // ===============================================================
+    match /profiles/{uid} {
+      allow read: if true;
+      allow create: if isOwner(uid) && 
+        isValidString(request.resource.data.displayName, 1, 100);
+      allow update: if isOwner(uid) && 
+        isValidString(request.resource.data.displayName, 1, 100);
+    }
+
+    // ===============================================================
+    // Stories
+    // ===============================================================
+    match /stories/{storyId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && 
+        request.resource.data.authorId == request.auth.uid &&
+        isValidString(request.resource.data.title, 1, 200) &&
+        isValidString(request.resource.data.content, 1, 50000);
+      allow update: if isAuthenticated() && (
+        // Admin can update anything (censor/uncensor)
+        isAdmin() ||
+        // Author can update content/title
+        (request.resource.data.authorId == request.auth.uid && 
+         request.resource.data.authorId == resource.data.authorId) ||
+        // Anyone can increment views or likesCount (using atomic increment)
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views', 'likesCount']) &&
+         (request.resource.data.get('views', resource.data.views) == resource.data.views + 1 ||
+          request.resource.data.get('likesCount', resource.data.likesCount) == resource.data.likesCount + 1))
+      );
+      allow delete: if isAuthenticated() && resource.data.authorId == request.auth.uid;
+
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isAuthenticated() && 
+          request.resource.data.authorId == request.auth.uid &&
+          isValidString(request.resource.data.text, 1, 1000);
+        allow delete: if isAuthenticated() && resource.data.authorId == request.auth.uid;
+      }
+    }
+
+    // ===============================================================
+    // Notifications
+    // ===============================================================
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // ===============================================================
+    // User Favorites
+    // ===============================================================
+    match /users/{userId}/favorites/{favId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+  }
+}

@@ -1,0 +1,121 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Public user profile information.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "bio": { "type": "string" },
+        "subscribersCount": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "displayName"]
+    },
+    "Story": {
+      "title": "Story",
+      "description": "An erotic story published by a user.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "category": { "type": "string", "enum": ["Amor Filial", "Bisexuales", "Confesiones", "Voyerismo", "Infidelidad", "Romance", "Fantasía", "Dark", "Tabú", "BDSM", "Otros"] },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorPhoto": { "type": "string" },
+        "views": { "type": "integer" },
+        "likesCount": { "type": "integer" },
+        "imageUrl": { "type": "string" },
+        "imageUrls": { 
+          "type": "array", 
+          "items": { "type": "string" },
+          "description": "Up to 7 images for the story."
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "content", "category", "authorId"]
+    },
+    "Comment": {
+      "title": "Comment",
+      "description": "A comment on a story.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "storyId": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorPhoto": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["storyId", "authorId", "text"]
+    },
+    "Subscription": {
+      "title": "Subscription",
+      "description": "A subscription relationship between two users.",
+      "type": "object",
+      "properties": {
+        "followerId": { "type": "string" },
+        "followingId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["followerId", "followingId"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "A notification for a user.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "message": { "type": "string" },
+        "storyId": { "type": "string" },
+        "type": { "type": "string" },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "message", "type", "read"]
+    },
+    "Favorite": {
+      "title": "Favorite",
+      "description": "A favorite story for a user.",
+      "type": "object",
+      "properties": {
+        "storyId": { "type": "string" },
+        "title": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "authorName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["storyId", "title", "authorName"]
+    }
+  },
+  "firestore": {
+    "/profiles/{uid}": {
+      "schema": "UserProfile",
+      "description": "Public profiles of users."
+    },
+    "/stories/{storyId}": {
+      "schema": "Story",
+      "description": "Collection of erotic stories."
+    },
+    "/stories/{storyId}/comments/{commentId}": {
+      "schema": "Comment",
+      "description": "Comments on a specific story."
+    },
+    "/subscriptions/{subId}": {
+      "schema": "Subscription",
+      "description": "Subscription records."
+    },
+    "/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "User notifications."
+    },
+    "/users/{userId}/favorites/{favId}": {
+      "schema": "Favorite",
+      "description": "User favorite stories."
+    }
+  }
+}
